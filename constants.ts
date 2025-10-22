@@ -5,16 +5,17 @@ const TAARE_ZAMEEN_PAR_VIDEO_URL = 'https://www.febspot.com/get_file/18/8a64a914
 
 
 export const HERO_DATA: HeroData = {
+    id: 0, // Added ID to conform to ContentItem
     category: 'MOVIE',
-    title: 'Project Viper',
-    description: 'In a race against time, an elite agent must stop a rogue operative from unleashing a devastating cyberweapon. The fate of the world hangs in the balance.',
-    year: 2024,
-    rating: 'PG-13',
-    genres: ['Action', 'Thriller', 'Sci-Fi'],
-    details: ['Movie', 'Action', '2024', 'PG-13'],
-    backgroundImageUrl: 'https://picsum.photos/seed/viper/1920/1080',
-    imageUrl: 'https://picsum.photos/seed/viper/400/225',
-    videoUrl: PROJECT_VIPER_VIDEO_URL,
+    title: 'Taare Zameen Par',
+    description: 'An eight-year-old boy is thought to be a lazy trouble-maker, until the new art teacher has the patience and compassion to discover the real problem behind his struggles in school.',
+    year: 2007,
+    rating: 'U/A 7+',
+    genres: ['Drama'],
+    details: ['Movie', '2007', 'U/A 7+'],
+    backgroundImageUrl: 'https://m.media-amazon.com/images/M/MV5BMDhjZWViN2YtMmUzYS00MGI1LTk3MTQtM2U5N2U2YjU5N2E3XkEyXkFqcGdeQXVyNTE0MDc0NTM@._V1_FMjpg_UX1000_.jpg',
+    imageUrl: 'https://stat4.bollywoodhungama.in/wp-content/uploads/2016/03/51206127.jpg',
+    videoUrl: TAARE_ZAMEEN_PAR_VIDEO_URL,
     progress: 30, // The user has watched 30% of this movie
 };
 
@@ -49,7 +50,7 @@ export const CONTENT_ROWS: ContentRow[] = [
     items: [
       { id: 13, title: 'Arcane', imageUrl: 'https://picsum.photos/seed/arcane/400/225', description: 'Set in utopian Piltover and the oppressed underground of Zaun, the story follows the origins of two iconic League champions-and the power that will tear them apart.', year: 2021, rating: 'TV-14', genres:['Animation', 'Action'] },
       { id: 14, title: 'Inventing Anna', imageUrl: 'https://picsum.photos/seed/anna/400/225', description: 'A journalist with a lot to prove investigates the case of Anna Delvey, the Instagram-legendary German heiress who stole the hearts of New York\'s social scene - and stole their money as well.', year: 2022, rating: 'TV-MA', genres:['Drama'] },
-      { id: 15, title: 'All of Us Are Dead', imageUrl: 'https://picsum.photos/seed/dead/400/225', description: 'A high school becomes ground zero for a zombie virus outbreak. Trapped students must fight their way out - or turn into one of the rabid infected.', year: 2022, rating: 'TV-MA', genres:['Horror', 'Action'] },
+      { id: 15, 'title': 'All of Us Are Dead', imageUrl: 'https://picsum.photos/seed/dead/400/225', description: 'A high school becomes ground zero for a zombie virus outbreak. Trapped students must fight their way out - or turn into one of the rabid infected.', year: 2022, rating: 'TV-MA', genres:['Horror', 'Action'] },
       { id: 16, title: 'The Sandman', imageUrl: 'https://picsum.photos/seed/sandman/400/225', description: 'Upon escaping after decades of imprisonment by a mortal wizard, Dream, the personification of dreams, sets about to reclaim his lost equipment.', year: 2022, rating: 'TV-MA', genres:['Fantasy', 'Drama'] },
       { id: 17, title: 'Wednesday', imageUrl: 'https://picsum.photos/seed/wednesday/400/225', description: 'While attending Nevermore Academy, Wednesday Addams attempts to master her emerging psychic ability, thwart a monstrous killing spree, and solve the supernatural mystery that embroiled her parents 25 years ago.', year: 2022, rating: 'TV-14', genres:['Comedy', 'Fantasy'] },
       { id: 18, title: 'Cyberpunk Edgerunners', imageUrl: 'https://picsum.photos/seed/edgerunners/400/225', description: 'A Street Kid trying to survive in a technology and body modification-obsessed city of the future. Having everything to lose, he chooses to stay alive by becoming an Edgerunner.', year: 2022, rating: 'TV-MA', genres:['Animation', 'Sci-Fi'] },

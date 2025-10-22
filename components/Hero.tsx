@@ -7,50 +7,55 @@ const PlayIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
-const InformationCircleIcon: React.FC<{className?: string}> = ({className}) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.386-.225a8.25 8.25 0 0 1 4.312-4.312l.225-.386m-4.062 4.062a8.25 8.25 0 0 0-4.312 4.312l-.225.386m4.062-4.062-.386.225a8.25 8.25 0 0 1-4.312 4.312l-.225.386m-4.062-4.062a8.25 8.25 0 0 0 4.312-4.312l.225-.386M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0v-4.5m0-4.5v-2.25" />
-    </svg>
+const ResumeIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm14.024-.983a1.125 1.125 0 0 1 0 1.966l-5.603 3.113A1.125 1.125 0 0 1 9 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113Z" clipRule="evenodd" />
+  </svg>
 );
 
 
-interface HeroProps {
-    heroData: HeroData;
-    onPlay: () => void;
-    onMoreInfo: () => void;
-}
+export const Hero: React.FC<{ data: HeroData; onPlay: (item: HeroData) => void }> = ({ data, onPlay }) => {
+  const hasProgress = data.progress && data.progress > 0;
+  
+  return (
+    <div className="relative h-[55vh] md:h-[90vh] overflow-hidden">
+      <div className="absolute inset-0 pt-20">
+        <img src={data.backgroundImageUrl} alt={data.title} className="w-full h-full object-cover hero-bg-animate" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a0c05] via-[#1a0c05]/30 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a0c05] to-transparent"></div>
+      </div>
+      
+      <div className="relative z-10 flex flex-col justify-end h-full pb-10 md:pb-20 px-6 md:px-16 max-w-screen-2xl mx-auto">
+        <div className="w-full md:w-1/2 lg:w-2/5 space-y-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-red-600 font-black text-xl italic">S</span>
+            <span className="tracking-[0.3em] text-xs font-semibold">{data.category}</span>
+          </div>
 
-export const Hero: React.FC<HeroProps> = ({ heroData, onPlay, onMoreInfo }) => {
-    const { title, description, details, backgroundImageUrl } = heroData;
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+            {data.title}
+          </h1>
 
-    return (
-        <div className="relative h-[56.25vw] min-h-[400px] max-h-[800px] flex items-center">
-            <div className="absolute inset-0 z-0">
-                <img src={backgroundImageUrl} alt={title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a0c05] via-[#1a0c05]/50 to-transparent"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1a0c05] via-[#1a0c05]/30 to-transparent"></div>
-            </div>
-
-            <div className="relative z-10 px-6 md:px-16 w-full md:w-1/2 lg:w-2/5">
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4">{title}</h1>
-                <p className="text-sm md:text-base lg:text-lg mb-6 leading-relaxed">
-                    {description}
-                </p>
-                <div className="flex items-center space-x-4">
-                    <button 
-                        onClick={onPlay}
-                        className="flex items-center justify-center bg-white text-black px-6 py-2.5 rounded-md font-semibold text-lg hover:bg-white/80 transition-colors duration-200">
-                        <PlayIcon className="w-6 h-6 mr-2"/>
-                        <span>Play</span>
-                    </button>
-                    <button 
-                        onClick={onMoreInfo}
-                        className="flex items-center justify-center bg-white/30 text-white px-6 py-2.5 rounded-md font-semibold text-lg hover:bg-white/40 transition-colors duration-200 backdrop-blur-sm">
-                        <InformationCircleIcon className="w-6 h-6 mr-2" />
-                        <span>More Info</span>
-                    </button>
-                </div>
-            </div>
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-300">
+            {data.details.map((detail, index) => (
+              <React.Fragment key={index}>
+                <span>{detail}</span>
+                {index < data.details.length - 1 && <span className="w-1 h-1 bg-gray-500 rounded-full"></span>}
+              </React.Fragment>
+            ))}
+          </div>
+          
+          <div className="pt-4">
+              <button 
+                onClick={() => data.videoUrl && onPlay(data)}
+                className="flex items-center justify-center gap-x-2 px-6 py-3 bg-white text-black font-bold rounded-full hover:bg-opacity-80 transition-all duration-200 focus:scale-105"
+              >
+                  {hasProgress ? <ResumeIcon className="w-6 h-6" /> : <PlayIcon className="w-6 h-6" />}
+                  <span>{hasProgress ? 'Resume' : 'Play Now'}</span>
+              </button>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 };

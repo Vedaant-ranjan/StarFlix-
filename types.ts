@@ -16,7 +16,7 @@ export interface ContentRow {
   items: ContentItem[];
 }
 
-export interface HeroData extends Omit<ContentItem, 'id' | 'details' | 'category' | 'backgroundImageUrl'> {
+export interface HeroData extends ContentItem {
   category: string;
   details: string[];
   backgroundImageUrl: string;

@@ -36,7 +36,7 @@ export const ContentCarousel: React.FC<{ row: ContentRow; onSelect: (item: Conte
           className="absolute left-0 top-0 bottom-0 z-20 w-16 bg-gradient-to-r from-[#1a0c05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex items-center justify-center cursor-pointer">
           <ChevronLeftIcon className="w-8 h-8 text-white" />
         </button>
-        <div ref={scrollRef} className="flex space-x-4 overflow-x-auto pb-4 px-6 md:px-16 no-scrollbar">
+        <div ref={scrollRef} className="flex space-x-4 overflow-x-auto pb-4 px-6 md:px-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {row.items.map(item => (
             <ContentCard key={item.id} item={item} onSelect={onSelect} />
           ))}
