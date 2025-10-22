@@ -1,0 +1,23 @@
+export interface ContentItem {
+  id: number;
+  title: string;
+  imageUrl: string;
+  description: string;
+  year: number;
+  rating: string;
+  genres: string[];
+  progress?: number; // Optional progress for 'Continue Watching'
+  videoUrl?: string;
+}
+
+export interface ContentRow {
+  id: string;
+  title: string;
+  items: ContentItem[];
+}
+
+export interface HeroData extends Omit<ContentItem, 'id' | 'details' | 'category' | 'backgroundImageUrl'> {
+  category: string;
+  details: string[];
+  backgroundImageUrl: string;
+}
