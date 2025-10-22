@@ -32,7 +32,7 @@ export const ContentCard: React.FC<{ item: ContentItem; onSelect: (item: Content
   return (
     <div 
         ref={cardRef}
-        className="flex-shrink-0 w-60 md:w-72 group outline-none rounded-lg cursor-pointer" 
+        className="flex-shrink-0 w-60 md:w-72 group outline-none rounded-lg cursor-pointer transform-origin-center transition-transform duration-300" 
         title={item.title}
         tabIndex={0}
         onFocus={handleFocus}

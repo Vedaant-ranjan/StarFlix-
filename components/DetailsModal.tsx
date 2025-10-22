@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import type { ContentItem } from '../types';
 
@@ -13,21 +14,57 @@ const ResumeIcon: React.FC<{className?: string}> = ({className}) => (
   </svg>
 );
 
+const PlusIcon: React.FC<{className?: string}> = ({className}) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+);
+
+const CheckIcon: React.FC<{className?: string}> = ({className}) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+    </svg>
+);
+
 interface DetailsModalProps {
     item: ContentItem;
     onClose: () => void;
     onPlay: (item: ContentItem) => void;
+    isItemInMyList: boolean;
+    onToggleMyList: () => void;
 }
 
-export const DetailsModal: React.FC<DetailsModalProps> = ({ item, onClose, onPlay }) => {
+export const DetailsModal: React.FC<DetailsModalProps> = ({ item, onClose, onPlay, isItemInMyList, onToggleMyList }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const playButtonRef = useRef<HTMLButtonElement>(null);
     const hasProgress = item.progress && item.progress > 0;
 
     useEffect(() => {
+        const focusableElementsSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const modal = modalRef.current;
+        if (!modal) return;
+        
+        const focusableElements = Array.from(modal.querySelectorAll<HTMLElement>(focusableElementsSelector));
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 onClose();
+                return;
+            }
+            if (event.key === 'Tab') {
+                if (event.shiftKey) { // Shift + Tab
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        event.preventDefault();
+                    }
+                } else { // Tab
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        event.preventDefault();
+                    }
+                }
             }
         };
 
@@ -89,6 +126,14 @@ export const DetailsModal: React.FC<DetailsModalProps> = ({ item, onClose, onPla
                         >
                             {hasProgress ? <ResumeIcon className="w-6 h-6" /> : <PlayIcon className="w-6 h-6" />}
                             <span>{hasProgress ? 'Resume' : 'Play Now'}</span>
+                        </button>
+                        <button 
+                            onClick={onToggleMyList}
+                            className="flex items-center justify-center gap-x-2 px-6 py-3 bg-white/10 text-white font-bold rounded-full hover:bg-white/20 transition-all duration-200 focus:scale-105 border border-white/20"
+                            aria-label={isItemInMyList ? 'Remove from My List' : 'Add to My List'}
+                        >
+                            {isItemInMyList ? <CheckIcon className="w-6 h-6" /> : <PlusIcon className="w-6 h-6" />}
+                            <span className="hidden sm:inline">{isItemInMyList ? 'In My List' : 'My List'}</span>
                         </button>
                     </div>
                 </div>

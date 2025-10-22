@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { ContentItem } from '../types';
 
@@ -16,7 +17,7 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
-  const { videoUrl, title } = item;
+  const { id, videoUrl, title, progress: initialProgressPercent } = item;
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -28,6 +29,41 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const controlsTimeoutRef = useRef<number | null>(null);
+
+  const clearProgress = useCallback(() => {
+    if (typeof id === 'undefined') return;
+    try {
+        const history = JSON.parse(localStorage.getItem('watchHistory') || '{}');
+        if (history[id]) {
+            delete history[id];
+            localStorage.setItem('watchHistory', JSON.stringify(history));
+        }
+    } catch (e) {
+        console.error("Failed to clear watch history:", e);
+    }
+  }, [id]);
+
+  const saveProgress = useCallback((video: HTMLVideoElement) => {
+    if (typeof id === 'undefined' || !video.duration || isNaN(video.duration)) return;
+
+    const currentTime = video.currentTime;
+    const duration = video.duration;
+    const progressPercent = (currentTime / duration) * 100;
+
+    if (progressPercent < 5 || progressPercent > 95) {
+      clearProgress();
+      return;
+    }
+
+    try {
+        const history = JSON.parse(localStorage.getItem('watchHistory') || '{}');
+        history[id] = { progress: currentTime, duration: duration, lastWatched: Date.now() };
+        localStorage.setItem('watchHistory', JSON.stringify(history));
+    } catch (e) {
+        console.error("Failed to save watch history:", e);
+    }
+  }, [id, clearProgress]);
+
 
   const formatTime = (timeInSeconds: number) => {
     if (isNaN(timeInSeconds) || timeInSeconds < 0) return "0:00";
@@ -43,7 +79,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
       } else {
         videoRef.current.pause();
       }
-      setIsPlaying(!videoRef.current.paused);
     }
   }, []);
 
@@ -78,13 +113,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
 
   const toggleFullScreen = useCallback(() => {
     if (!document.fullscreenElement) {
-        playerContainerRef.current?.requestFullscreen();
+        playerContainerRef.current?.requestFullscreen().catch(err => {
+            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        });
     } else {
         document.exitFullscreen();
     }
   }, []);
 
-  const handleMouseMove = useCallback(() => {
+  const showControls = useCallback(() => {
     setIsControlsVisible(true);
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
@@ -101,39 +138,70 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
     if (!video) return;
 
     const handleTimeUpdate = () => setProgress(video.currentTime);
-    const handleLoadedMetadata = () => setDuration(video.duration);
+    const handleLoadedMetadata = () => {
+        setDuration(video.duration);
+        if (initialProgressPercent && video.duration > 0) {
+            const startTime = (initialProgressPercent / 100) * video.duration;
+            if (startTime < video.duration * 0.95) {
+                video.currentTime = startTime;
+            }
+        }
+    };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => clearProgress();
     
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
     
     video.play().catch(() => setIsPlaying(false));
-    handleMouseMove();
+    showControls();
+
+    const progressInterval = setInterval(() => {
+        if (video && !video.paused) {
+            saveProgress(video);
+        }
+    }, 5000);
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+      
+      clearInterval(progressInterval);
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (video) saveProgress(video);
     };
-  }, [handleMouseMove]);
+  }, [id, initialProgressPercent, saveProgress, clearProgress, showControls]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-        if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
+        showControls();
+        
+        const activeEl = document.activeElement as HTMLElement;
+        const isInputFocused = activeEl?.tagName === 'INPUT' && activeEl.getAttribute('type') === 'range';
+
         const keyMap: Record<string, () => void> = {
             ' ': handlePlayPause,
+            'Enter': () => {
+              if (activeEl && typeof activeEl.click === 'function') {
+                activeEl.click();
+              } else {
+                handlePlayPause();
+              }
+            },
             'Escape': onClose,
             'f': toggleFullScreen,
             'm': toggleMute,
-            'ArrowRight': () => { if (videoRef.current) videoRef.current.currentTime += 5; },
-            'ArrowLeft': () => { if (videoRef.current) videoRef.current.currentTime -= 5; },
-            'ArrowUp': () => { if (videoRef.current && volume < 1) setVolume(v => Math.min(1, v + 0.1)); },
-            'ArrowDown': () => { if (videoRef.current && volume > 0) setVolume(v => Math.max(0, v - 0.1)); },
+            'ArrowRight': () => { if (videoRef.current && !isInputFocused) videoRef.current.currentTime += 5; },
+            'ArrowLeft': () => { if (videoRef.current && !isInputFocused) videoRef.current.currentTime -= 5; },
+            'ArrowUp': () => { if (videoRef.current) setVolume(v => Math.min(1, v + 0.1)); },
+            'ArrowDown': () => { if (videoRef.current) setVolume(v => Math.max(0, v - 0.1)); },
         };
         if (keyMap[e.key]) {
             e.preventDefault();
@@ -142,23 +210,29 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
     };
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
 
-    window.addEventListener('keydown', handleKeyDown);
+    const container = playerContainerRef.current;
+    container?.addEventListener('keydown', handleKeyDown);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      container?.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [onClose, handlePlayPause, toggleFullScreen, toggleMute, volume]);
+  }, [onClose, handlePlayPause, toggleFullScreen, toggleMute, volume, showControls]);
 
   useEffect(() => {
     if(videoRef.current) videoRef.current.volume = volume;
   }, [volume]);
+
+  useEffect(() => {
+    // Focus the player container so it can receive key events
+    playerContainerRef.current?.focus();
+  }, []);
   
   return (
-    <div ref={playerContainerRef} onMouseMove={handleMouseMove} className="fixed inset-0 bg-black z-[100] flex justify-center items-center">
+    <div ref={playerContainerRef} tabIndex={-1} className="fixed inset-0 bg-black z-[100] flex justify-center items-center cursor-none outline-none">
       <video ref={videoRef} src={videoUrl} className="w-full h-full object-contain" />
       
-      <div className={`fixed inset-0 transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`fixed inset-0 transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0'}`} onClick={e => e.stopPropagation()}>
         {/* Top Overlay */}
         <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent flex items-center">
             <button onClick={onClose} className="text-white p-2 rounded-full hover:bg-white/20">
@@ -179,17 +253,18 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
               value={progress}
               onChange={handleSeek}
               className="w-full netflix-player-seek-bar"
+              aria-label="Seek progress"
             />
             <span className="text-sm font-semibold">{formatTime(duration)}</span>
           </div>
           {/* Control Buttons */}
           <div className="flex justify-between items-center mt-2">
             <div className="flex items-center gap-4">
-              <button onClick={handlePlayPause} className="text-white">
+              <button onClick={handlePlayPause} className="text-white p-2" aria-label={isPlaying ? 'Pause' : 'Play'}>
                 {isPlaying ? <PauseIcon /> : <PlayIcon />}
               </button>
               <div className="flex items-center gap-2 group">
-                <button onClick={toggleMute} className="text-white">
+                <button onClick={toggleMute} className="text-white p-2" aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}>
                     {isMuted || volume === 0 ? <VolumeMuteIcon/> : <VolumeUpIcon/>}
                 </button>
                 <input
@@ -199,12 +274,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onClose }) => {
                     step="0.05"
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
-                    className="w-24 netflix-player-volume-slider opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    className="w-24 netflix-player-volume-slider opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+                    aria-label="Volume control"
                 />
               </div>
             </div>
             <div>
-              <button onClick={toggleFullScreen} className="text-white">
+              <button onClick={toggleFullScreen} className="text-white p-2" aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
                 {isFullscreen ? <FullscreenExitIcon /> : <FullscreenEnterIcon />}
               </button>
             </div>
